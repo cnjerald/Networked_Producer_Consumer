@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>{{title}}</title>
+    <style>
+      body {
+        font-family: sans-serif;
+      }
+      .file-entry {
+        margin-bottom: 10px;
+      }
+      .progress-container {
+        width: 300px;
+        background-color: #eee;
+        border-radius: 5px;
+        overflow: hidden;
+        margin-top: 4px;
+      }
+      .progress-bar {
+        height: 10px;
+        background-color: #4caf50;
+        width: 0%;
+        transition: width 0.2s;
+      }
+      .status {
+        font-size: 0.9em;
+        color: #333;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>{{title}}</h1>
+
+    <ul>
+      {{#each files}}
+        <li class="file-entry">
+          {{this}} —
+          <!--  Pass @index directly to JS -->
+          <button onclick="sendToConsumer('{{this}}', {{@index}})">Send to Consumer</button>
+          <div class="progress-container">
+            <div class="progress-bar" id="bar-{{@index}}"></div>
+          </div>
+          <div class="status" id="status-{{@index}}"></div>
+        </li>
+      {{/each}}
+    </ul>
+
+    <script>
+      function sendToConsumer(filename, index) {
+        const bar = document.getElementById(`bar-${index}`);
+        const status = document.getElementById(`status-${index}`);
+
+        // Paranoid
+        if (!bar || !status) {
+          console.error("Missing progress bar/status element for", filename);
+          return;
+        }
+        // This updates the progress bar, XML for progress tracking
+        const xhr = new XMLHttpRequest();
+        // .open("METHOD","URL","IS_ASYNC")
+        xhr.open("POST", `/send/${filename}`, true);
+        // On any change
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            // Compute percentage of the length
+            const percent = (event.loaded / event.total) * 100;
+            bar.style.width = percent + "%";
+            status.textContent = `Uploading ${filename}: ${percent.toFixed(1)}%`;
+          }
+        };
+        // Once finished then update the status of the bar
+        xhr.onload = () => {
+          if (xhr.status === 200) {
+            bar.style.width = "100%";
+            status.textContent = ` Uploaded successfully!`;
+          } else {
+            status.textContent = ` Upload failed (${xhr.status})`;
+          }
+        };
+
+        // Otherwise put an error message
+        xhr.onerror = () => {
+          status.textContent = " Network error during upload.";
+        };
+        
+        // Start the request
+        xhr.send();
+      }
+    </script>
+  </body>
+</html>

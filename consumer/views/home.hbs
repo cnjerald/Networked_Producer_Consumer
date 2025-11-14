@@ -1,0 +1,105 @@
+<h3>Uploaded Videos</h3>
+<div id="videoContainer"></div>
+
+<h3>Previews (10 seconds)</h3>
+<div id="previewContainer"></div>
+
+<!-- Video Player Modal -->
+<div id="playerModal" onclick="closeModal()">
+  <video id="videoPlayer" controls></video>
+</div>
+
+<h3>Upload Progress</h3>
+<div id="progressContainer"></div>
+
+
+<script>
+const progressContainer = document.getElementById('progressContainer');
+
+// Connect to WebSocket server
+const ws = new WebSocket('ws://localhost:8080');
+
+const progressBars = {};
+
+ws.onmessage = (event) => {
+  const msg = JSON.parse(event.data);
+  const { filename, uploadedBytes, done } = msg;
+
+  if (!progressBars[filename]) {
+    // Create new progress bar
+    const div = document.createElement('div');
+    div.innerHTML = `
+      <strong>${filename}</strong>
+      <div style="width:300px;background:#eee;border-radius:4px;">
+        <div id="bar-${filename}" style="height:10px;width:0%;background:#4caf50;"></div>
+      </div>
+    `;
+    progressContainer.appendChild(div);
+    progressBars[filename] = document.getElementById(`bar-${filename}`);
+  }
+
+  // Update progress
+  const bar = progressBars[filename];
+  if (done) {
+    bar.style.width = '100%';
+  } else {
+    // Approximate % for demo purposes
+    const percent = Math.min(100, (uploadedBytes / 1e6) * 10); 
+    // NOTE: You can send total file size from producer if known
+    bar.style.width = percent + '%';
+  }
+};
+
+const videoContainer = document.getElementById('videoContainer');
+const previewContainer = document.getElementById('previewContainer');
+
+function playVideo(src) {
+  const modal = document.getElementById("playerModal");
+  const video = document.getElementById("videoPlayer");
+  video.src = src;
+  video.play();
+  modal.style.display = "flex";
+}
+
+function closeModal() {
+  const modal = document.getElementById("playerModal");
+  const video = document.getElementById("videoPlayer");
+  video.pause();
+  video.src = "";
+  modal.style.display = "none";
+}
+
+// Function to fetch video list without reloading the page
+async function refreshVideos() {
+  try {
+    const res = await fetch('/api/videos');
+    const data = await res.json();
+
+    // Clear containers
+    videoContainer.innerHTML = '';
+    previewContainer.innerHTML = '';
+
+    // Populate videos
+    data.videos.forEach(file => {
+      const div = document.createElement('div');
+      div.innerHTML = `${file} <button onclick="playVideo('/uploads/${file}')">Play</button>`;
+      videoContainer.appendChild(div);
+    });
+
+    // Populate previews
+    data.previews.forEach(file => {
+      const div = document.createElement('div');
+      div.innerHTML = `${file} <button onclick="playVideo('/previews/${file}')">Play Preview</button>`;
+      previewContainer.appendChild(div);
+    });
+  } catch(err) {
+    console.error('Failed to refresh video list', err);
+  }
+}
+
+// Refresh every 1 seconds
+setInterval(refreshVideos, 1000);
+
+// Initial load
+refreshVideos();
+</script>
