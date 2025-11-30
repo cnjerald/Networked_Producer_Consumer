@@ -1,31 +1,90 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <title>{{title}}</title>
     <style>
-      body {
-        font-family: sans-serif;
-      }
-      .file-entry {
-        margin-bottom: 10px;
-      }
-      .progress-container {
-        width: 300px;
-        background-color: #eee;
-        border-radius: 5px;
-        overflow: hidden;
-        margin-top: 4px;
-      }
-      .progress-bar {
-        height: 10px;
-        background-color: #4caf50;
-        width: 0%;
-        transition: width 0.2s;
-      }
-      .status {
-        font-size: 0.9em;
-        color: #333;
-      }
+        * {
+          margin: 25;
+          padding: 0;
+          box-sizing: border-box;
+        }
+
+        body {
+          font-family: Inter, Arial, sans-serif;
+          background: #1B3C53;
+          padding: 40px;
+          color: #E3E3E3;
+        }
+
+        h1 {
+          margin-bottom: 25px;
+          font-size: 32px;
+          font-weight: 600;
+          color: #E3E3E3;
+        }
+        ul {
+          list-style: none;
+        }
+
+        .file-entry {
+          background: #456882;
+          padding: 16px 20px;
+          border-radius: 10px;
+          margin-bottom: 16px;
+
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+
+          box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+          border: 1px solid #234C6A;
+        }
+
+        button {
+          align-self: start;
+          padding: 8px 14px;
+
+          background: #E3E3E3;
+          border: none;
+          color: black;
+
+          border-radius: 6px;
+          font-size: 14px;
+          cursor: pointer;
+          transition: background 0.2s;
+        }
+
+        button:hover {
+          background: #1B3C53;
+          color: white;
+        }
+
+        button:active {
+          background: #456882;
+          color: white;
+        }
+
+        .progress-container {
+          width: 100%;
+          height: 10px;
+          background-color: #e5e7eb;
+          border-radius: 5px;
+          overflow: hidden;
+        }
+
+        .progress-bar {
+          height: 100%;
+          background-color: #10b981; 
+          width: 0%;
+          transition: width 0.2s;
+        }
+
+        .status {
+          font-size: 13px;
+          color: #E3E3E3;
+        }
+
     </style>
   </head>
 
