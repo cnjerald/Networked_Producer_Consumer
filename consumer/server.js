@@ -14,7 +14,7 @@ const fs = require('fs-extra');
 const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
 const ffmpeg = require('fluent-ffmpeg');
-const ffmpegPath = "C:/Users/cnjer/Downloads/ffmpeg-2025-11-12-git-6cdd2cbe32-essentials_build/ffmpeg-2025-11-12-git-6cdd2cbe32-essentials_build/bin/ffmpeg.exe"; // <- change to your actual path
+const ffmpegPath = "C:/Users/aljirah/Downloads/ffmpeg-8.0.1-essentials_build/bin/ffmpeg.exe"; // <- change to your actual path
 ffmpeg.setFfmpegPath(ffmpegPath);
 const WebSocket = require('ws');
 

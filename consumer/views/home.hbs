@@ -1,105 +1,150 @@
-<h3>Uploaded Videos</h3>
-<div id="videoContainer"></div>
+<!DOCTYPE html>
+<html>
+<head>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <title>{{title}}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: Inter, Arial, sans-serif;
+      background: #1B3C53;
+      padding: 40px;
+      color: #E3E3E3;
+    }
+    h1 { margin-bottom: 25px; font-size: 32px; font-weight: 600; }
 
-<h3>Previews (10 seconds)</h3>
-<div id="previewContainer"></div>
+    .video-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 20px;
+    }
 
-<!-- Video Player Modal -->
-<div id="playerModal" onclick="closeModal()">
-  <video id="videoPlayer" controls></video>
-</div>
+    .video-card {
+      background: #456882;
+      border-radius: 10px;
+      padding: 10px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: 0.2s;
+      border: 1px solid #234C6A;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
 
-<h3>Upload Progress</h3>
-<div id="progressContainer"></div>
+    .video-card:hover { background: #567B95; }
 
+    .video-card video {
+      width: 100%;
+      height: 170px;
+      border-radius: 8px;
+      object-fit: cover;
+      background: black;
+    }
+
+    #playerModal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.85);
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+    }
+
+    #videoPlayer {
+      width: 80%;
+      max-width: 900px;
+      border-radius: 12px;
+    }
+  </style>
+</head>
+<body>
+  <h1>{{title}}</h1>
+
+  <div id="videoContainer" class="video-grid"></div>
+
+  <div id="playerModal" onclick="closeModal()">
+    <video id="videoPlayer" controls></video>
+  </div>
 
 <script>
-const progressContainer = document.getElementById('progressContainer');
+const videoContainer = document.getElementById("videoContainer");
+const existingVideos = new Set();
 
-// Connect to WebSocket server
-const ws = new WebSocket('ws://localhost:8080');
+// -------- Load & refresh videos -------- //
+async function refreshVideos() {
+  try {
+    const res = await fetch("/api/videos");
+    const { videos, previews } = await res.json();
 
-const progressBars = {};
+    videos.forEach(file => {
+      if (existingVideos.has(file)) return;
 
-ws.onmessage = (event) => {
-  const msg = JSON.parse(event.data);
-  const { filename, uploadedBytes, done } = msg;
+      const base = file.replace(".mp4", "");
+      const previewName = previews.find(p => p.includes(base));
 
-  if (!progressBars[filename]) {
-    // Create new progress bar
-    const div = document.createElement('div');
-    div.innerHTML = `
-      <strong>${filename}</strong>
-      <div style="width:300px;background:#eee;border-radius:4px;">
-        <div id="bar-${filename}" style="height:10px;width:0%;background:#4caf50;"></div>
-      </div>
-    `;
-    progressContainer.appendChild(div);
-    progressBars[filename] = document.getElementById(`bar-${filename}`);
+      const card = document.createElement("div");
+      card.className = "video-card";
+
+      card.innerHTML = `
+        <video 
+          src="/uploads/${file}" 
+          muted 
+          preload="metadata"
+          onmouseover="showPreview(this, '/previews/${previewName}')"
+          onmouseout="stopPreview(this, '/uploads/${file}')"
+        ></video>
+        <p>${file}</p>
+      `;
+
+      card.onclick = () => playVideo(`/uploads/${file}`);
+      videoContainer.appendChild(card);
+
+      existingVideos.add(file);
+    });
+
+  } catch (err) {
+    console.error("Failed to load videos", err);
   }
+}
 
-  // Update progress
-  const bar = progressBars[filename];
-  if (done) {
-    bar.style.width = '100%';
-  } else {
-    // Approximate % for demo purposes
-    const percent = Math.min(100, (uploadedBytes / 1e6) * 10); 
-    // NOTE: You can send total file size from producer if known
-    bar.style.width = percent + '%';
-  }
-};
+// -------- Hover preview that loops 10 seconds -------- //
+function showPreview(videoTag, previewSrc) {
+  if (!previewSrc) return;
+  videoTag.src = previewSrc;
+  videoTag.currentTime = 0;
+  videoTag.loop = true;
+  videoTag.play().catch(() => {});
+}
 
-const videoContainer = document.getElementById('videoContainer');
-const previewContainer = document.getElementById('previewContainer');
+function stopPreview(videoTag, fullSrc) {
+  videoTag.pause();
+  videoTag.loop = false;
+  videoTag.src = fullSrc;
+}
 
+// -------- Modal play -------- //
 function playVideo(src) {
   const modal = document.getElementById("playerModal");
-  const video = document.getElementById("videoPlayer");
-  video.src = src;
-  video.play();
+  const player = document.getElementById("videoPlayer");
+  player.src = src;
+  player.play();
   modal.style.display = "flex";
 }
 
 function closeModal() {
   const modal = document.getElementById("playerModal");
-  const video = document.getElementById("videoPlayer");
-  video.pause();
-  video.src = "";
+  const player = document.getElementById("videoPlayer");
+  player.pause();
+  player.src = "";
   modal.style.display = "none";
 }
 
-// Function to fetch video list without reloading the page
-async function refreshVideos() {
-  try {
-    const res = await fetch('/api/videos');
-    const data = await res.json();
-
-    // Clear containers
-    videoContainer.innerHTML = '';
-    previewContainer.innerHTML = '';
-
-    // Populate videos
-    data.videos.forEach(file => {
-      const div = document.createElement('div');
-      div.innerHTML = `${file} <button onclick="playVideo('/uploads/${file}')">Play</button>`;
-      videoContainer.appendChild(div);
-    });
-
-    // Populate previews
-    data.previews.forEach(file => {
-      const div = document.createElement('div');
-      div.innerHTML = `${file} <button onclick="playVideo('/previews/${file}')">Play Preview</button>`;
-      previewContainer.appendChild(div);
-    });
-  } catch(err) {
-    console.error('Failed to refresh video list', err);
-  }
-}
-
-// Refresh every 1 seconds
-setInterval(refreshVideos, 1000);
-
-// Initial load
+// -------- Initial load -------- //
 refreshVideos();
+setInterval(refreshVideos, 5000);
 </script>
+</body>
+</html>

@@ -12,9 +12,11 @@
   "dependencies": {
     "@grpc/grpc-js": "^1.14.1",
     "@grpc/proto-loader": "^0.8.0",
+    "cors": "^2.8.5",
     "express": "^5.1.0",
-    "express-handlebars": "^8.0.2",
-    "fs-extra": "^11.3.2"
+    "express-handlebars": "^8.0.4",
+    "fs-extra": "^11.3.2",
+    "multer": "^2.0.2"
   },
   "description": ""
 }
